@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>30-Day Abs Challenge Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the app */
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+        }
+        .container {
+            max-width: 1200px;
+        }
+        th, td {
+            padding: 0.75rem; /* Add some padding to table cells */
+            border-bottom: 1px solid #e2e8f0; /* Light border for rows */
+        }
+        th {
+            background-color: #4F81BD; /* Header blue */
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+        td {
+            text-align: center;
+        }
+        input[type="number"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 0.375rem; /* rounded-md */
+            border: 1px solid #cbd5e0; /* border-gray-300 */
+            background-color: #ffffff; /* bg-white */
+            transition: all 0.2s ease-in-out;
+        }
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #3B82F6; /* ring-blue-500 */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25); /* ring-blue-500/25 */
+        }
+        .message-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50; /* Green */
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 1000;
+        }
+        .message-box.show {
+            opacity: 1;
+        }
+        /* Loading spinner */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container mx-auto bg-white rounded-lg shadow-xl overflow-hidden mb-8">
+        <!-- Overview + Guide Section -->
+        <div class="p-6">
+            <h1 class="text-3xl font-bold text-center py-4 rounded-t-lg text-white bg-blue-700"
+                style="background-color: #4F81BD;">
+                30-Day Visible Abs Challenge (TDEE: 2950)
+            </h1>
+            <div class="grid md:grid-cols-2 gap-6 mt-6 p-4 border border-gray-200 rounded-lg">
+                <div>
+                    <h2 class="text-xl font-bold text-blue-700 mb-2">Welcome!</h2>
+                    <p class="text-gray-700">This tracker helps you reach visible abs in 30 days with your updated TDEE of 2950 kcal.</p>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-blue-700 mb-2">Calories:</h2>
+                    <p class="text-gray-700">Your daily calorie intake goal is ~2200-2450 kcal (500-750 kcal deficit).</p>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-blue-700 mb-2">Workouts:</h2>
+                    <p class="text-gray-700">Include Jumping Jacks, High Knees, Crunches, Leg Raises, Planks, Full Body HIIT, and active rest days (walk or yoga).</p>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-blue-700 mb-2">Logging:</h2>
+                    <p class="text-gray-700">Each day, record your weight, waist, calories consumed, calories burned, and workout status.</p>
+                </div>
+                <div class="md:col-span-2">
+                    <h2 class="text-xl font-bold text-blue-700 mb-2">Tips for Success:</h2>
+                    <ul class="list-disc list-inside text-gray-700">
+                        <li>Take weekly progress photos.</li>
+                        <li>Measure your waist circumference weekly (or bi-weekly).</li>
+                        <li>Hydrate frequently throughout the day.</li>
+                        <li>Aim for 7-8 hours of quality sleep every night.</li>
+                        <li>Stay consistent with your diet and exercise plan.</li>
+                        <li>Focus on lean protein and abundant vegetables.</li>
+                        <li>Strictly control rice/noodle portions.</li>
+                    </ul>
+                </div>
+                <div class="md:col-span-2">
+                    <h2 class="text-xl font-bold text-blue-700 mb-2">Legend:</h2>
+                    <ul class="list-disc list-inside text-gray-700">
+                        <li class="font-bold text-yellow-600">Yellow cells: Input fields for your daily data.</li>
+                        <li class="font-bold text-blue-600">Blue text: Suggested workout types based on day of the week.</li>
+                        <li>"Y/N" dropdown for logging workout completion.</li>
+                        <li>Net Calories are calculated automatically.</li>
+                    </ul>
+                </div>
+            </div>
+            <!-- API Key Input Section -->
+            <div class="mt-6 p-4 bg-gray-100 rounded-lg border border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-2">AI Guidance Setup</h2>
+                <p class="text-gray-700 text-sm mb-3">To use the "Get AI Guidance" feature when hosting this app on a website (like GitHub Pages), you need to provide your own Google Gemini API Key. This key is used to connect to the AI model.</p>
+                <p class="text-gray-700 text-sm mb-4">You can obtain a free API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 hover:underline">Google AI Studio</a>. Please keep your API key confidential and do not share it publicly if this application were to be used in a broader context.</p>
+                <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                    <label for="apiKeyInput" class="font-semibold text-gray-700 whitespace-nowrap">Gemini API Key:</label>
+                    <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API Key here" class="flex-grow p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="mt-6 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <button id="getAIGuidanceBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition-all duration-300">
+                    Get AI Guidance
+                </button>
+                <button id="resetDataBtn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition-all duration-300">
+                    Reset All Data
+                </button>
+            </div>
+
+            <!-- AI Guidance Section -->
+            <div id="aiGuidanceSection" class="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h2 class="text-xl font-bold text-blue-700 mb-3 text-center">Your AI Fitness Coach</h2>
+                <div id="aiGuidanceContent" class="text-gray-800 leading-relaxed min-h-[50px] flex items-center justify-center">
+                    <p class="text-center text-gray-500">Click "Get AI Guidance" to receive personalized feedback!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 30-Day Tracker Section -->
+        <div class="p-6 overflow-x-auto">
+            <h2 class="text-2xl font-bold text-blue-700 mb-4 text-center">30-Day Tracker</h2>
+            <table class="min-w-full bg-white rounded-lg overflow-hidden border border-gray-200">
+                <thead>
+                    <tr>
+                        <th class="py-3 px-4 border border-gray-300">Date</th>
+                        <th class="py-3 px-4 border border-gray-300">Calories Consumed (kcal)</th>
+                        <th class="py-3 px-4 border border-gray-300">Calories Burned (Workout) (kcal)</th>
+                        <th class="py-3 px-4 border border-gray-300">Net Calories (kcal)</th>
+                        <th class="py-3 px-4 border border-gray-300">Weight (kg)</th>
+                        <th class="py-3 px-4 border border-gray-300">Waist Circumference (cm)</th>
+                        <th class="py-3 px-4 border border-gray-300">Workout Done? (Y/N)</th>
+                        <th class="py-3 px-4 border border-gray-300">Workout Type</th>
+                        <th class="py-3 px-4 border border-gray-300">Comments / Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="trackerBody">
+                    <!-- Data will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Message Box for User Feedback -->
+    <div id="messageBox" class="message-box"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        const localStorageKey = 'absTrackerData';
+        const apiKeyLocalStorageKey = 'geminiApiKey'; // New key for API key
+        let trackerData = [];
+        const TDEE = 2950; // User's provided TDEE
+        const TARGET_CAL_MIN = 2200; // Lower end of target calorie intake
+        const TARGET_CAL_MAX = 2450; // Upper end of target calorie intake
+
+        /**
+         * Displays a temporary message box for user feedback.
+         * @param {string} message - The message to display.
+         * @param {string} type - 'success' or 'error' to change background color.
+         */
+        function showMessageBox(message, type = 'success') {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.className = 'message-box show'; // Reset classes and show
+
+            if (type === 'success') {
+                messageBox.style.backgroundColor = '#4CAF50'; // Green
+            } else if (type === 'error') {
+                messageBox.style.backgroundColor = '#f44336'; // Red
+            }
+
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000); // Hide after 3 seconds
+        }
+
+        /**
+         * Loads data from localStorage or initializes a new 30-day tracker.
+         */
+        function loadData() {
+            const storedData = localStorage.getItem(localStorageKey);
+            if (storedData) {
+                trackerData = JSON.parse(storedData);
+                // Ensure net calories are re-calculated on load in case of schema changes or errors.
+                trackerData.forEach(day => {
+                    day.caloriesConsumed = parseInt(day.caloriesConsumed) || 0;
+                    day.caloriesBurned = parseInt(day.caloriesBurned) || 0;
+                    day.netCalories = day.caloriesConsumed - day.caloriesBurned;
+                });
+                showMessageBox("Tracker data loaded!");
+            } else {
+                initializeTrackerData();
+                showMessageBox("New tracker initialized!");
+            }
+
+            // Load API Key from localStorage
+            const storedApiKey = localStorage.getItem(apiKeyLocalStorageKey);
+            if (storedApiKey) {
+                document.getElementById('apiKeyInput').value = storedApiKey;
+            }
+        }
+
+        /**
+         * Initializes the 30-day tracker data with default values.
+         */
+        function initializeTrackerData() {
+            trackerData = [];
+            const startDate = new Date(); // Start from today
+            const defaultCalorieIntake = 2200; // Default suggested intake
+
+            for (let i = 0; i < 30; i++) {
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + i);
+                const weekday = currentDate.getDay(); // 0 for Sunday, 1 for Monday, etc.
+
+                let workoutType;
+                let caloriesBurnedWorkout;
+
+                if (weekday === 6) { // Saturday (weekday == 6 for Saturday)
+                    workoutType = "Full Body HIIT: 4 rounds (burpees, high knees, mountain climbers)";
+                    caloriesBurnedWorkout = 300;
+                } else if (weekday === 0) { // Sunday (weekday == 0 for Sunday)
+                    workoutType = "Active Rest: 30–45 min walk or yoga";
+                    caloriesBurnedWorkout = 120;
+                } else { // Weekdays (Monday-Friday)
+                    workoutType = "Core Circuit: Jumping jacks, high knees, crunches, leg raises, planks";
+                    caloriesBurnedWorkout = 200;
+                }
+
+                const caloriesConsumed = defaultCalorieIntake;
+                const netCalories = caloriesConsumed - caloriesBurnedWorkout;
+
+                trackerData.push({
+                    date: currentDate.toISOString().split('T')[0], // McClellan-MM-DD format
+                    caloriesConsumed: caloriesConsumed,
+                    caloriesBurned: caloriesBurnedWorkout,
+                    netCalories: netCalories,
+                    weight: '',
+                    waist: '',
+                    workoutDone: '',
+                    workoutType: workoutType,
+                    comments: 'Log your progress and any notes.'
+                });
+            }
+            saveData(); // Save initial data to localStorage
+        }
+
+        /**
+         * Saves the current tracker data to localStorage.
+         */
+        function saveData() {
+            try {
+                localStorage.setItem(localStorageKey, JSON.stringify(trackerData));
+                // showMessageBox("Data saved!", 'success'); // Explicitly show save message on input change
+            } catch (e) {
+                console.error("Error saving data to localStorage:", e);
+                showMessageBox("Error: Could not save data. Storage might be full.", 'error');
+            }
+        }
+
+        /**
+         * Saves the API Key to localStorage.
+         */
+        function saveApiKey(key) {
+            try {
+                localStorage.setItem(apiKeyLocalStorageKey, key);
+                showMessageBox("API Key saved!", 'success');
+            } catch (e) {
+                console.error("Error saving API Key to localStorage:", e);
+                showMessageBox("Error: Could not save API Key.", 'error');
+            }
+        }
+
+        /**
+         * Renders the tracker data into the HTML table.
+         */
+        function renderTable() {
+            const trackerBody = document.getElementById('trackerBody');
+            trackerBody.innerHTML = ''; // Clear existing rows
+
+            trackerData.forEach((day, index) => {
+                const row = trackerBody.insertRow();
+                row.className = 'hover:bg-gray-50 transition-colors duration-200';
+
+                // Date
+                const dateCell = row.insertCell();
+                dateCell.textContent = day.date;
+                dateCell.className = 'text-gray-800 font-semibold';
+
+                // Calories Consumed (editable)
+                const calConsumedCell = row.insertCell();
+                const calConsumedInput = document.createElement('input');
+                calConsumedInput.type = 'number';
+                calConsumedInput.value = day.caloriesConsumed;
+                calConsumedInput.className = 'w-24 p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100'; // Yellow for input
+                calConsumedInput.addEventListener('input', (e) => {
+                    const newValue = parseInt(e.target.value) || 0;
+                    trackerData[index].caloriesConsumed = newValue;
+                    trackerData[index].netCalories = newValue - (parseInt(trackerData[index].caloriesBurned) || 0);
+                    row.cells[3].textContent = trackerData[index].netCalories; // Update net calories cell
+                    saveData();
+                });
+                calConsumedCell.appendChild(calConsumedInput);
+
+                // Calories Burned (Workout) (editable)
+                const calBurnedCell = row.insertCell();
+                const calBurnedInput = document.createElement('input');
+                calBurnedInput.type = 'number';
+                calBurnedInput.value = day.caloriesBurned;
+                calBurnedInput.className = 'w-24 p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100'; // Yellow for input
+                calBurnedInput.addEventListener('input', (e) => {
+                    const newValue = parseInt(e.target.value) || 0;
+                    trackerData[index].caloriesBurned = newValue;
+                    trackerData[index].netCalories = (parseInt(trackerData[index].caloriesConsumed) || 0) - newValue;
+                    row.cells[3].textContent = trackerData[index].netCalories; // Update net calories cell
+                    saveData();
+                });
+                calBurnedCell.appendChild(calBurnedInput);
+
+                // Net Calories (calculated)
+                const netCalCell = row.insertCell();
+                netCalCell.textContent = day.netCalories;
+                netCalCell.className = 'text-gray-800 font-bold'; // Auto-calculated, not editable directly
+
+                // Weight (editable)
+                const weightCell = row.insertCell();
+                const weightInput = document.createElement('input');
+                weightInput.type = 'number';
+                weightInput.step = '0.1'; // Allow decimal for weight
+                weightInput.value = day.weight;
+                weightInput.className = 'w-24 p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100';
+                weightInput.addEventListener('input', (e) => {
+                    trackerData[index].weight = e.target.value;
+                    saveData();
+                });
+                weightCell.appendChild(weightInput);
+
+                // Waist Circumference (editable)
+                const waistCell = row.insertCell();
+                const waistInput = document.createElement('input');
+                waistInput.type = 'number';
+                waistInput.step = '0.1'; // Allow decimal for waist
+                waistInput.value = day.waist;
+                waistInput.className = 'w-24 p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100';
+                waistInput.addEventListener('input', (e) => {
+                    trackerData[index].waist = e.target.value;
+                    saveData();
+                });
+                waistCell.appendChild(waistInput);
+
+                // Workout Done? (Y/N dropdown)
+                const workoutDoneCell = row.insertCell();
+                const workoutDoneSelect = document.createElement('select');
+                workoutDoneSelect.className = 'w-24 p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100';
+                ['', 'Y', 'N'].forEach(optionValue => {
+                    const option = document.createElement('option');
+                    option.value = optionValue;
+                    option.textContent = optionValue;
+                    if (optionValue === day.workoutDone) {
+                        option.selected = true;
+                    }
+                    workoutDoneSelect.appendChild(option);
+                });
+                workoutDoneSelect.addEventListener('change', (e) => {
+                    trackerData[index].workoutDone = e.target.value;
+                    saveData();
+                });
+                workoutDoneCell.appendChild(workoutDoneSelect);
+
+                // Workout Type (suggested, non-editable by user)
+                const workoutTypeCell = row.insertCell();
+                workoutTypeCell.textContent = day.workoutType;
+                workoutTypeCell.className = 'text-blue-600 text-sm italic text-left'; // Blue for suggestion
+
+                // Comments / Notes (editable)
+                const commentsCell = row.insertCell();
+                const commentsInput = document.createElement('input');
+                commentsInput.type = 'text';
+                commentsInput.value = day.comments;
+                commentsInput.className = 'w-full p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100';
+                commentsInput.addEventListener('input', (e) => {
+                    trackerData[index].comments = e.target.value;
+                    saveData();
+                });
+                commentsCell.appendChild(commentsInput);
+            });
+            // showMessageBox is not always needed after full render, only when data is actively saved/loaded.
+            // For initial render after loading, `showMessageBox` is called in `loadData`.
+        }
+
+        /**
+         * Gets AI guidance based on the current day's logged data.
+         */
+        async function getAIGuidance() {
+            const aiGuidanceContent = document.getElementById('aiGuidanceContent');
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const userApiKey = apiKeyInput.value.trim();
+
+            if (!userApiKey) {
+                aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">Please enter your Gemini API Key to get guidance.</p>';
+                showMessageBox("API Key is missing.", 'error');
+                apiKeyInput.focus(); // Focus on the input field for user convenience
+                return;
+            }
+
+            aiGuidanceContent.innerHTML = '<div class="loader"></div><p class="mt-2 text-center text-gray-500">Getting personalized advice...</p>'; // Show loading
+
+            const today = new Date().toISOString().split('T')[0];
+            const currentDayData = trackerData.find(day => day.date === today);
+
+            if (!currentDayData) {
+                aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">No data found for today. Please log some progress first!</p>';
+                showMessageBox("Please log data for today first.", 'error');
+                return;
+            }
+
+            const prompt = `You are a fitness coach guiding a user on a 30-day abs challenge. The user's goal is to achieve visible abs.
+Their TDEE is ${TDEE} kcal. Their daily target calorie intake is ${TARGET_CAL_MIN}-${TARGET_CAL_MAX} kcal.
+Here is today's logged data:
+Date: ${currentDayData.date}
+Calories Consumed: ${currentDayData.caloriesConsumed || 'Not logged'} kcal
+Calories Burned (Workout): ${currentDayData.caloriesBurned || 'Not logged'} kcal
+Net Calories: ${currentDayData.netCalories || 'Not logged'} kcal (Calculated as Consumed - Burned)
+Weight: ${currentDayData.weight || 'Not logged'} kg
+Waist Circumference: ${currentDayData.waist || 'Not logged'} cm
+Workout Done: ${currentDayData.workoutDone || 'Not logged'}
+Workout Type: ${currentDayData.workoutType}
+Comments: ${currentDayData.comments || 'No comments'}
+
+Based on this, please provide concise, encouraging, and actionable guidance for their progress for today and tomorrow. If the logged calories are significantly off target, gently suggest adjusting. If weight/waist are not logged, prompt them to do so. If the workout is not done, encourage consistency. Focus on practical, daily advice for someone in a calorie deficit aiming for muscle definition. Keep your response relatively brief, under 200 words.`;
+
+            try {
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                // Use the user-provided API key
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${userApiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    aiGuidanceContent.innerHTML = `<p>${text}</p>`;
+                    showMessageBox("AI guidance received!");
+                } else {
+                    aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">Failed to get AI guidance. Please try again. (Check API Key or response structure)</p>';
+                    showMessageBox("AI response error.", 'error');
+                    console.error("Unexpected AI response structure:", result);
+                }
+            } catch (error) {
+                aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">Error connecting to AI. Check your network, API Key, or try again later.</p>';
+                showMessageBox("Network or API error.", 'error');
+                console.error("Error fetching AI guidance:", error);
+            }
+        }
+
+        /**
+         * Event listener for the Reset Data button.
+         */
+        function handleResetData() {
+            if (confirm("Are you sure you want to reset all tracker data? This action cannot be undone.")) {
+                localStorage.removeItem(localStorageKey); // Clear tracker data
+                localStorage.removeItem(apiKeyLocalStorageKey); // Clear API Key
+                initializeTrackerData();
+                renderTable();
+                document.getElementById('apiKeyInput').value = ''; // Clear API key input field
+                document.getElementById('aiGuidanceContent').innerHTML = '<p class="text-center text-gray-500">Click "Get AI Guidance" to receive personalized feedback!</p>';
+                showMessageBox("All data has been reset!", 'error');
+            }
+        }
+
+        /**
+         * Initializes the application by loading data and rendering the table.
+         */
+        function initApp() {
+            loadData();
+            renderTable();
+            document.getElementById('resetDataBtn').addEventListener('click', handleResetData);
+            document.getElementById('getAIGuidanceBtn').addEventListener('click', getAIGuidance);
+
+            // Add event listener to save API key on input change
+            document.getElementById('apiKeyInput').addEventListener('input', (e) => {
+                saveApiKey(e.target.value.trim());
+            });
+        }
+    </script>
+</body>
+</html>
