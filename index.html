@@ -87,6 +87,42 @@
         #aiGuidanceContent ol { list-style-type: decimal; margin-left: 20px; margin-bottom: 1em;}
         #aiGuidanceContent strong { font-weight: bold; }
         #aiGuidanceContent em { font-style: italic; }
+
+        /* Custom Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s ease-in-out;
+        }
+        .modal-overlay.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
     </style>
 </head>
 <body class="p-4">
@@ -208,7 +244,7 @@
                     <tr>
                         <th class="py-3 px-4 border border-gray-300">Date</th>
                         <th class="py-3 px-4 border border-gray-300">Calories Consumed (kcal)</th>
-                        <th class="py-3 px-4 borderParsed(base64ImageData) border-gray-300">Calories Burned (Workout) (kcal)</th>
+                        <th class="py-3 px-4 border border-gray-300">Calories Burned (Workout) (kcal)</th>
                         <th class="py-3 px-4 border border-gray-300">Net Calories (kcal)</th>
                         <th class="py-3 px-4 border border-gray-300">Weight (kg)</th>
                         <th class="py-3 px-4 border border-gray-300">Waist Circumference (cm)</th>
@@ -226,6 +262,22 @@
 
     <!-- Message Box for User Feedback -->
     <div id="messageBox" class="message-box"></div>
+
+    <!-- Custom Confirmation Modal for Reset Data -->
+    <div id="resetConfirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <p class="text-lg font-semibold text-gray-800">Are you sure you want to reset ALL your tracker data?</p>
+            <p class="text-sm text-gray-600 mt-2">This action cannot be undone and will permanently delete your logged data.</p>
+            <div class="modal-buttons">
+                <button id="confirmResetYes" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition-all duration-300">
+                    Yes, Reset Data
+                </button>
+                <button id="confirmResetNo" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-md shadow-lg transition-all duration-300">
+                    No, Keep Data
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         // Import Firebase modules directly in this script block
@@ -468,7 +520,6 @@
                 }
             } else {
                 console.log("saveData: User not logged in or db not available, data not saved to Firestore.");
-                // showMessageBox("Login to save your progress!", 'error'); // Commented out to avoid spamming messages
             }
         }
 
@@ -513,7 +564,7 @@
                     window.trackerData[index].caloriesConsumed = newValue;
                     window.trackerData[index].netCalories = newValue - (parseInt(window.trackerData[index].caloriesBurned) || 0);
                     row.cells[3].textContent = window.trackerData[index].netCalories; // Update net calories cell
-                    saveData();
+                    // saveData(); // Removed continuous save
                 });
                 calConsumedCell.appendChild(calConsumedInput);
 
@@ -528,7 +579,7 @@
                     window.trackerData[index].caloriesBurned = newValue;
                     window.trackerData[index].netCalories = (parseInt(window.trackerData[index].caloriesConsumed) || 0) - newValue;
                     row.cells[3].textContent = window.trackerData[index].netCalories; // Update net calories cell
-                    saveData();
+                    // saveData(); // Removed continuous save
                 });
                 calBurnedCell.appendChild(calBurnedInput);
 
@@ -546,7 +597,7 @@
                 weightInput.className = 'w-24 p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100';
                 weightInput.addEventListener('input', (e) => {
                     window.trackerData[index].weight = e.target.value;
-                    saveData();
+                    // saveData(); // Removed continuous save
                 });
                 weightCell.appendChild(weightInput);
 
@@ -559,7 +610,7 @@
                 waistInput.className = 'w-24 p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100';
                 waistInput.addEventListener('input', (e) => {
                     window.trackerData[index].waist = e.target.value;
-                    saveData();
+                    // saveData(); // Removed continuous save
                 });
                 waistCell.appendChild(waistInput);
 
@@ -578,7 +629,7 @@
                 });
                 workoutDoneSelect.addEventListener('change', (e) => {
                     window.trackerData[index].workoutDone = e.target.value;
-                    saveData();
+                    // saveData(); // Removed continuous save
                 });
                 workoutDoneCell.appendChild(workoutDoneSelect);
 
@@ -595,7 +646,7 @@
                 commentsInput.className = 'w-full p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100';
                 commentsInput.addEventListener('input', (e) => {
                     window.trackerData[index].comments = e.target.value;
-                    saveData();
+                    // saveData(); // Removed continuous save
                 });
                 commentsCell.appendChild(commentsInput);
             });
@@ -778,12 +829,33 @@ Based on this, please provide concise, encouraging, and actionable guidance for 
         }
 
         /**
+         * Shows the custom confirmation modal for resetting data.
+         */
+        function showResetConfirmModal() {
+            const modal = document.getElementById('resetConfirmModal');
+            modal.classList.add('show');
+            return new Promise((resolve) => {
+                document.getElementById('confirmResetYes').onclick = () => {
+                    modal.classList.remove('show');
+                    resolve(true);
+                };
+                document.getElementById('confirmResetNo').onclick = () => {
+                    modal.classList.remove('show');
+                    resolve(false);
+                };
+            });
+        }
+
+
+        /**
          * Event listener for the Reset Data button.
          * Now clears both tracker data from Firestore (if logged in) and local storage.
          */
         async function handleResetData() {
             console.log("handleResetData function called.");
-            if (confirm("Are you sure you want to reset ALL your tracker data? This action cannot be undone.")) {
+            const confirmed = await showResetConfirmModal(); // Use the custom modal
+
+            if (confirmed) {
                 if (window.userId && window.db) {
                     try {
                         const trackerDocRef = getTrackerDocRef(window.userId);
@@ -807,6 +879,9 @@ Based on this, please provide concise, encouraging, and actionable guidance for 
                 // initializeTrackerDataAndSave.
                 document.getElementById('aiGuidanceContent').innerHTML = '<p class="text-center text-gray-500">Click "Get AI Guidance" to receive personalized feedback!</p>';
                 showMessageBox("All data has been reset!", 'error');
+            } else {
+                showMessageBox("Data reset cancelled.", 'info');
+                console.log("handleResetData: Data reset cancelled by user.");
             }
         }
 
@@ -872,6 +947,9 @@ Based on this, please provide concise, encouraging, and actionable guidance for 
                         console.log("onAuthStateChanged: User logged in. UID:", window.userId, "Email:", user.email);
 
                         loadTrackerAndSettingsData(); // Load user-specific data from Firestore (tracker data)
+                        // Add listener to save data on page close/navigation
+                        window.addEventListener('beforeunload', saveData);
+                        console.log("onAuthStateChanged: 'beforeunload' listener added for data saving.");
 
                     } else {
                         window.userId = null;
@@ -880,6 +958,10 @@ Based on this, please provide concise, encouraging, and actionable guidance for 
                             window.currentUnsubscribe = null;
                             console.log("onAuthStateChanged: Firestore listener detached.");
                         }
+                        // Remove listener when logged out to prevent attempting to save for a null user
+                        window.removeEventListener('beforeunload', saveData);
+                        console.log("onAuthStateChanged: 'beforeunload' listener removed.");
+
                         document.getElementById('loginForm').classList.remove('hidden');
                         document.getElementById('userInfo').classList.add('hidden');
                         document.getElementById('appContent').classList.add('hidden'); // Hide tracker
