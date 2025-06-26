@@ -9,28 +9,6 @@
     <!-- Marked.js CDN for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global Firebase variables (initialized on window load by initApp)
-        window.firebaseApp = null;
-        window.db = null;
-        window.auth = null;
-        window.userId = null;
-        window.currentUnsubscribe = null; // To manage Firestore snapshot listener
-
-        // Global variables provided by Canvas environment
-        window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        window.firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-
-        // Export necessary functions for external script access if needed, though they are mostly
-        // used internally in this single-file app via window object.
-        // This block primarily ensures Firebase modules are loaded.
-    </script>
-
     <style>
         /* Custom styles for the app */
         body {
@@ -135,7 +113,7 @@
                 <div>
                     <h2 class="text-xl font-bold text-blue-700 mb-2">Logging:</h2>
                     <p class="text-gray-700">Each day, record your weight, waist, calories consumed, calories burned, and workout status.</p>
-                C            </div>
+                </div>
                 <div class="md:col-span-2">
                     <h2 class="text-xl font-bold text-blue-700 mb-2">Tips for Success:</h2>
                     <ul class="list-disc list-inside text-gray-700">
@@ -179,6 +157,20 @@
                             Sign Up
                         </button>
                     </div>
+                    <div class="text-center mt-4">
+                        <span class="text-gray-600">OR</span>
+                    </div>
+                    <div class="flex justify-center mt-4">
+                        <button id="googleLoginBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition-all duration-300 flex items-center">
+                            <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12.24 10.29C11.66 10.11 11.02 10 10.35 10C8.01 10 6 11.56 6 14.15C6 16.74 8.01 18.3 10.35 18.3C11.95 18.3 13.06 17.5 13.79 16.79L16.48 19.48C14.73 21.1 12.35 22 9.99 22C4.54 22 0 17.05 0 11C0 4.95 4.54 0 9.99 0C15.01 0 18.23 3.65 18.23 8.88C18.23 9.4 18.17 9.9 18.06 10.39L12.24 10.29Z" fill="#EA4335"/>
+                                <path d="M12.24 10.29C12.42 9.71 12.49 9.11 12.49 8.48C12.49 7.84 12.42 7.23 12.24 6.64L18.06 6.55C18.17 7.03 18.23 7.53 18.23 8.04C18.23 13.27 15.01 16.92 9.99 16.92C7.65 16.92 5.64 15.36 5.64 12.77C5.64 10.18 7.65 8.62 9.99 8.62C11.02 8.62 11.66 8.79 12.24 8.97L12.24 10.29Z" fill="#FBBC04"/>
+                                <path d="M22.06 12C22.06 12.75 22 13.49 21.89 14.22L12.01 14.22L12.01 10.29L21.89 10.29C21.95 10.51 22.06 10.74 22.06 11C22.06 11.39 22.01 11.77 21.94 12.14L22.06 12Z" fill="#4285F4"/>
+                                <path d="M10.35 18.3C11.95 18.3 13.06 17.5 13.79 16.79L16.48 19.48C14.73 21.1 12.35 22 9.99 22C4.54 22 0 17.05 0 11C0 4.95 4.54 0 9.99 0C15.01 0 18.23 3.65 18.23 8.88C18.23 9.4 18.17 9.9 18.06 10.39L12.24 10.29Z" fill="#34A853"/>
+                            </svg>
+                            Sign in with Google
+                        </button>
+                    </div>
                 </div>
                 <div id="userInfo" class="hidden text-center mt-4">
                     <p class="text-gray-800 text-lg">Logged in as: <span id="userEmail" class="font-semibold"></span> (<span id="userIdDisplay" class="font-semibold text-sm"></span>)</p>
@@ -188,16 +180,7 @@
                 </div>
             </div>
 
-            <!-- API Key Input Section (Moved inside appContent or handled by login) -->
-            <div id="apiKeySection" class="mt-6 p-4 bg-gray-100 rounded-lg border border-gray-200 hidden">
-                <h2 class="text-xl font-bold text-gray-800 mb-2">AI Guidance Setup</h2>
-                <p class="text-gray-700 text-sm mb-3">To use the "Get AI Guidance" feature, you need to provide your Google Gemini API Key. This key is stored securely with your account and is only used to connect to the AI model.</p>
-                <p class="text-gray-700 text-sm mb-4">You can obtain a free API key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 hover:underline">Google AI Studio</a>. Please keep your API key confidential.</p>
-                <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    <label for="apiKeyInput" class="font-semibold text-gray-700 whitespace-nowrap">Gemini API Key:</label>
-                    <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API Key here" class="flex-grow p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-            </div>
+            <!-- Removed the API Key Input Section -->
 
             <div class="mt-6 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <button id="getAIGuidanceBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md shadow-lg transition-all duration-300">
@@ -225,7 +208,7 @@
                     <tr>
                         <th class="py-3 px-4 border border-gray-300">Date</th>
                         <th class="py-3 px-4 border border-gray-300">Calories Consumed (kcal)</th>
-                        <th class="py-3 px-4 border border-gray-300">Calories Burned (Workout) (kcal)</th>
+                        <th class="py-3 px-4 borderParsed(base64ImageData) border-gray-300">Calories Burned (Workout) (kcal)</th>
                         <th class="py-3 px-4 border border-gray-300">Net Calories (kcal)</th>
                         <th class="py-3 px-4 border border-gray-300">Weight (kg)</th>
                         <th class="py-3 px-4 border border-gray-300">Waist Circumference (cm)</th>
@@ -247,21 +230,36 @@
     <script type="module">
         // Import Firebase modules directly in this script block
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Access global variables set in the head script block
-        const appId = window.appId;
-        const firebaseConfig = window.firebaseConfig;
+        // Global variables provided by Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        let firebaseApp;
-        let db;
-        let auth;
-        let userId = null;
-        let currentUnsubscribe = null; // To manage Firestore snapshot listener for trackerData
+        // Firebase project configuration - THIS KEY REMAINS UNTOUCHED as requested.
+        const firebaseConfig = {
+            apiKey: "AIzaSyAYY1aQymBWfb56rSMvcgpX92Sz7qGd-mc", // Firebase API Key
+            authDomain: "fitnesstrackerpro-20c66.firebaseapp.com",
+            projectId: "fitnesstrackerpro-20c66",
+            storageBucket: "fitnesstrackerpro-20c66.firebasestorage.app",
+            messagingSenderId: "538496930878",
+            appId: "1:538496930878:web:34c461143490facc6aed6f"
+        };
+        console.log("Firebase config being used:", firebaseConfig);
+
+        // Gemini API Key - THIS KEY IS NOW HARDCODED as requested.
+        const GEMINI_API_KEY = "AIzaSyBY0Fx-V2DbfzJvfiRc_ZGrGSiow1ETUjA";
+
+
+        // Explicitly attach these to window to ensure global accessibility in all contexts/callbacks
+        window.firebaseApp = null;
+        window.db = null;
+        window.auth = null;
+        window.userId = null;
+        window.currentUnsubscribe = null; // To manage Firestore snapshot listener for trackerData
+        window.trackerData = []; // Main data array for the tracker
 
         const localStorageKey = 'absTrackerData'; // LocalStorage for initial data migration
-        const apiKeyLocalStorageKey = 'geminiApiKey'; // LocalStorage for initial API key migration
 
         const TDEE = 2950; // User's provided TDEE
         const TARGET_CAL_MIN = 2200; // Lower end of target calorie intake
@@ -295,141 +293,45 @@
          * @returns {object} Firestore DocumentReference.
          */
         function getTrackerDocRef(uid) {
-            return doc(db, `artifacts/${appId}/users/${uid}/trackerData`, 'current');
+            return doc(window.db, `artifacts/${appId}/users/${uid}/trackerData`, 'current');
         }
 
         /**
          * Returns the Firestore document reference for user's settings (e.g., API key).
+         * NOTE: This is primarily for other potential settings, not for the hardcoded Gemini API key anymore.
          * @param {string} uid - The user's UID.
          * @returns {object} Firestore DocumentReference.
          */
         function getUserSettingsDocRef(uid) {
-            return doc(db, `artifacts/${appId}/users/${uid}/settings`, 'config');
+            return doc(window.db, `artifacts/${appId}/users/${uid}/settings`, 'config');
         }
 
         // --- Data Management Functions ---
         /**
-         * Loads data from Firestore (if logged in) or initializes new tracker data.
-         * Handles migration from localStorage if it exists for a newly logged-in user.
+         * Initializes the 30-day tracker data and saves it to Firestore.
+         * This is called only when a user logs in for the first time or after a data reset.
          */
-        async function loadTrackerAndSettingsData() {
-            if (userId) { // User is logged in
-                if (currentUnsubscribe) {
-                    currentUnsubscribe(); // Detach previous listener
-                }
-
-                const trackerDocRef = getTrackerDocRef(userId);
-                const settingsDocRef = getUserSettingsDocRef(userId);
-
-                // Try to migrate local storage data first if Firestore is empty
-                const localTrackerData = localStorage.getItem(localStorageKey);
-                const localApiKey = localStorage.getItem(apiKeyLocalStorageKey);
-
-                const firestoreTrackerDoc = await getDoc(trackerDocRef);
-                const firestoreSettingsDoc = await getDoc(settingsDocRef);
-
-                let hasMigrated = false;
-                if (!firestoreTrackerDoc.exists() && localTrackerData) {
-                    try {
-                        const parsedLocalData = JSON.parse(localTrackerData);
-                        await setDoc(trackerDocRef, { data: parsedLocalData }, { merge: true });
-                        localStorage.removeItem(localStorageKey);
-                        showMessageBox("Local tracker data migrated to your account!", 'success');
-                        hasMigrated = true;
-                    } catch (e) {
-                        console.error("Failed to migrate local tracker data:", e);
-                        showMessageBox("Error migrating local tracker data.", 'error');
-                    }
-                }
-
-                if (!firestoreSettingsDoc.exists() && localApiKey) {
-                     try {
-                        await setDoc(settingsDocRef, { geminiApiKey: localApiKey }, { merge: true });
-                        localStorage.removeItem(apiKeyLocalStorageKey);
-                        showMessageBox("Local API Key migrated to your account!", 'success');
-                        hasMigrated = true;
-                     } catch (e) {
-                         console.error("Failed to migrate local API key:", e);
-                         showMessageBox("Error migrating local API Key.", 'error');
-                     }
-                }
-
-                // Set up real-time listener for tracker data
-                currentUnsubscribe = onSnapshot(trackerDocRef, (docSnap) => {
-                    if (docSnap.exists() && docSnap.data().data) {
-                        trackerData = docSnap.data().data;
-                        // Ensure net calories are re-calculated on load
-                        trackerData.forEach(day => {
-                            day.caloriesConsumed = parseInt(day.caloriesConsumed) || 0;
-                            day.caloriesBurned = parseInt(day.caloriesBurned) || 0;
-                            day.netCalories = day.caloriesConsumed - day.caloriesBurned;
-                        });
-                        renderTable();
-                        showMessageBox("Tracker data synced!", 'success');
-                    } else {
-                        // Document doesn't exist or is empty, initialize if not migrated
-                        if (!hasMigrated) { // Only initialize if no existing data was migrated
-                             initializeTrackerData(); // This will save to Firestore
-                        } else {
-                            renderTable(); // Render table with migrated data
-                        }
-                    }
-                }, (error) => {
-                    console.error("Error fetching tracker data from Firestore:", error);
-                    showMessageBox("Error loading data from account. Try logging out/in.", 'error');
-                });
-
-                // Load API key from Firestore
-                onSnapshot(settingsDocRef, (docSnap) => {
-                    if (docSnap.exists() && docSnap.data().geminiApiKey) {
-                        document.getElementById('apiKeyInput').value = docSnap.data().geminiApiKey;
-                    } else {
-                        document.getElementById('apiKeyInput').value = ''; // Clear if not found
-                    }
-                }, (error) => {
-                    console.error("Error fetching API key from Firestore:", error);
-                });
-
-
-            } else { // Not logged in, clear UI and local storage related to account
-                trackerData = []; // Clear current data
-                renderTable(); // Clear table
-                document.getElementById('apiKeyInput').value = ''; // Clear API key input
-                document.getElementById('appContent').classList.add('hidden'); // Hide tracker
-                document.getElementById('apiKeySection').classList.add('hidden'); // Hide API key input
-                document.getElementById('loginForm').classList.remove('hidden'); // Show login form
-                document.getElementById('userInfo').classList.add('hidden'); // Hide user info
-
-                // If not logged in, keep `localStorage` data for now if exists.
-                // The prompt implies data is tied to accounts. If user logs out, their data isn't visible.
-                // If they log back in, their data reappears.
-                // If they choose not to login, they start fresh on current browser.
-            }
-        }
-
-        /**
-         * Initializes the 30-day tracker data with default values (saves to Firestore if logged in).
-         */
-        function initializeTrackerData() {
-            trackerData = [];
+        async function initializeTrackerDataAndSave() {
+            console.log("initializeTrackerDataAndSave: Starting data initialization.");
+            const defaultTrackerData = [];
             const startDate = new Date(); // Start from today
-            const defaultCalorieIntake = 2200; // Default suggested intake
+            const defaultCalorieIntake = 2200;
 
             for (let i = 0; i < 30; i++) {
                 const currentDate = new Date(startDate);
                 currentDate.setDate(startDate.getDate() + i);
-                const weekday = currentDate.getDay(); // 0 for Sunday, 1 for Monday, etc.
+                const weekday = currentDate.getDay();
 
                 let workoutType;
                 let caloriesBurnedWorkout;
 
-                if (weekday === 6) { // Saturday (weekday == 6 for Saturday)
+                if (weekday === 6) { // Saturday
                     workoutType = "Full Body HIIT: 4 rounds (burpees, high knees, mountain climbers)";
                     caloriesBurnedWorkout = 300;
-                } else if (weekday === 0) { // Sunday (weekday == 0 for Sunday)
+                } else if (weekday === 0) { // Sunday
                     workoutType = "Active Rest: 30–45 min walk or yoga";
                     caloriesBurnedWorkout = 120;
-                } else { // Weekdays (Monday-Friday)
+                } else { // Weekdays
                     workoutType = "Core Circuit: Jumping jacks, high knees, crunches, leg raises, planks";
                     caloriesBurnedWorkout = 200;
                 }
@@ -437,8 +339,8 @@
                 const caloriesConsumed = defaultCalorieIntake;
                 const netCalories = caloriesConsumed - caloriesBurnedWorkout;
 
-                trackerData.push({
-                    date: currentDate.toISOString().split('T')[0], // YYYY-MM-DD format
+                defaultTrackerData.push({
+                    date: currentDate.toISOString().split('T')[0],
                     caloriesConsumed: caloriesConsumed,
                     caloriesBurned: caloriesBurnedWorkout,
                     netCalories: netCalories,
@@ -449,46 +351,127 @@
                     comments: 'Log your progress and any notes.'
                 });
             }
-            saveData(); // Save initial data to Firestore (if logged in)
+
+            if (window.userId && window.db) {
+                try {
+                    const trackerDocRef = getTrackerDocRef(window.userId);
+                    // Use setDoc here to explicitly create or overwrite the document for initial setup
+                    await setDoc(trackerDocRef, { data: defaultTrackerData });
+                    console.log("initializeTrackerDataAndSave: Initial tracker data successfully created and saved to Firestore.");
+                    // Update window.trackerData and render immediately for responsiveness
+                    window.trackerData = defaultTrackerData;
+                    renderTable(); // Re-render table with newly initialized data
+                } catch (e) {
+                    console.error("initializeTrackerDataAndSave: Error initializing and saving data to Firestore:", e);
+                    showMessageBox("Error setting up initial data.", 'error');
+                }
+            } else {
+                 console.log("initializeTrackerDataAndSave: userId or db not available, cannot save initial data to Firestore.");
+            }
+        }
+
+        /**
+         * Loads data from Firestore (if logged in) or initializes new tracker data.
+         * Handles migration from localStorage if it exists for a newly logged-in user.
+         */
+        async function loadTrackerAndSettingsData() {
+            console.log("loadTrackerAndSettingsData: Function called.");
+            if (window.userId && window.db) { // Ensure db is also available before proceeding
+                if (window.currentUnsubscribe) {
+                    window.currentUnsubscribe(); // Detach previous listener
+                    console.log("loadTrackerAndSettingsData: Previous Firestore listener detached.");
+                }
+                console.log("loadTrackerAndSettingsData: Loading tracker and settings data for user:", window.userId);
+
+                const trackerDocRef = getTrackerDocRef(window.userId);
+
+                // Check for local storage migration before setting up listener to avoid race conditions
+                const localTrackerData = localStorage.getItem(localStorageKey);
+                if (localTrackerData) {
+                    console.log("loadTrackerAndSettingsData: Found local storage data. Checking Firestore existence...");
+                    const firestoreTrackerDoc = await getDoc(trackerDocRef);
+                    if (!firestoreTrackerDoc.exists()) {
+                        try {
+                            const parsedLocalData = JSON.parse(localTrackerData);
+                            await setDoc(trackerDocRef, { data: parsedLocalData }); // Use setDoc without merge for new doc
+                            localStorage.removeItem(localStorageKey);
+                            showMessageBox("Local tracker data migrated to your account!", 'success');
+                            console.log("loadTrackerAndSettingsData: Local tracker data successfully migrated to Firestore.");
+                        } catch (e) {
+                            console.error("loadTrackerAndSettingsData: Failed to migrate local tracker data:", e);
+                            showMessageBox("Error migrating local tracker data.", 'error');
+                        }
+                    } else {
+                        localStorage.removeItem(localStorageKey); // Clear local data if Firestore already has data
+                        console.log("loadTrackerAndSettingsData: Local storage data found but Firestore already has data, clearing local storage.");
+                    }
+                }
+
+                // Set up real-time listener for tracker data
+                window.currentUnsubscribe = onSnapshot(trackerDocRef, (docSnap) => {
+                    console.log("onSnapshot: Callback triggered. docSnap.exists():", docSnap.exists());
+                    const dataFromFirestore = docSnap.data();
+                    if (docSnap.exists() && dataFromFirestore && Array.isArray(dataFromFirestore.data)) {
+                        // Data exists and is an array, process and render
+                        let fetchedData = dataFromFirestore.data;
+                        console.log("onSnapshot: Fetched data from Firestore, number of items:", fetchedData.length, fetchedData);
+                        window.trackerData = fetchedData.map(day => ({
+                            date: day.date,
+                            caloriesConsumed: parseInt(day.caloriesConsumed) || 0,
+                            caloriesBurned: parseInt(day.caloriesBurned) || 0,
+                            netCalories: (parseInt(day.caloriesConsumed) || 0) - (parseInt(day.caloriesBurned) || 0),
+                            weight: day.weight || '',
+                            waist: day.waist || '',
+                            workoutDone: day.workoutDone || '',
+                            workoutType: day.workoutType || '',
+                            comments: day.comments || ''
+                        }));
+                        renderTable(); // Always render after data is set
+                        showMessageBox("Tracker data synced!", 'success');
+                        console.log(`onSnapshot: Tracker data fetched and synced from Firestore. ${window.trackerData.length} items.`);
+                    } else {
+                        // Document does NOT exist, or its 'data' field is missing/not an array, or it's an empty array.
+                        // In all these cases, we want to ensure fresh data is initialized.
+                        console.log("onSnapshot: Firestore tracker document missing, or data is empty/malformed. Triggering data initialization.");
+                        initializeTrackerDataAndSave(); // This will create/overwrite and then trigger this onSnapshot again.
+                    }
+                }, (error) => {
+                    console.error("onSnapshot: Error fetching tracker data from Firestore:", error);
+                    showMessageBox("Error loading data from account. Try logging out/in.", 'error');
+                    window.trackerData = []; // Clear data on error
+                    renderTable(); // Clear table display
+                });
+
+            } else { // Not logged in, clear UI
+                console.log("loadTrackerAndSettingsData: User not logged in or db not available. Clearing UI.");
+                window.trackerData = [];
+                renderTable(); // Ensure table is empty
+                document.getElementById('appContent').classList.add('hidden');
+                document.getElementById('loginForm').classList.remove('hidden');
+                document.getElementById('userInfo').classList.add('hidden');
+            }
         }
 
         /**
          * Saves the current tracker data to Firestore.
          */
         async function saveData() {
-            if (userId) {
+            if (window.userId && window.db) {
                 try {
-                    const trackerDocRef = getTrackerDocRef(userId);
-                    await setDoc(trackerDocRef, { data: trackerData }, { merge: true });
-                    showMessageBox("Data saved to account!", 'success');
+                    const trackerDocRef = getTrackerDocRef(window.userId);
+                    await setDoc(trackerDocRef, { data: window.trackerData }, { merge: true }); // Use merge for updates
+                    console.log("saveData: Tracker data successfully saved to Firestore.");
+                    // showMessageBox("Data saved!", 'success'); // Commented out to avoid spamming messages on every input change
                 } catch (e) {
-                    console.error("Error saving data to Firestore:", e);
+                    console.error("saveData: Error saving data to Firestore:", e);
                     showMessageBox("Error saving data to account.", 'error');
                 }
             } else {
-                // If not logged in, data changes are not persisted.
-                showMessageBox("Login to save your progress!", 'error');
+                console.log("saveData: User not logged in or db not available, data not saved to Firestore.");
+                // showMessageBox("Login to save your progress!", 'error'); // Commented out to avoid spamming messages
             }
         }
 
-        /**
-         * Saves the API Key to Firestore for the current user.
-         * @param {string} key - The API key to save.
-         */
-        async function saveApiKey(key) {
-            if (userId) {
-                try {
-                    const settingsDocRef = getUserSettingsDocRef(userId);
-                    await setDoc(settingsDocRef, { geminiApiKey: key }, { merge: true });
-                    showMessageBox("API Key saved to account!", 'success');
-                } catch (e) {
-                    console.error("Error saving API Key to Firestore:", e);
-                    showMessageBox("Error saving API Key to account.", 'error');
-                }
-            } else {
-                showMessageBox("Login to save your API Key!", 'error');
-            }
-        }
 
         /**
          * Renders the tracker data into the HTML table.
@@ -497,7 +480,20 @@
             const trackerBody = document.getElementById('trackerBody');
             trackerBody.innerHTML = ''; // Clear existing rows
 
-            trackerData.forEach((day, index) => {
+            console.log("renderTable: Rendering table with", window.trackerData.length, "items."); // Debugging line
+
+            if (window.trackerData.length === 0) {
+                console.log("renderTable: No data in window.trackerData to render.");
+                // Optionally display a message that data is loading or missing
+                const noDataRow = trackerBody.insertRow();
+                const cell = noDataRow.insertCell();
+                cell.colSpan = 9; // Span across all columns
+                cell.textContent = "No tracker data available. Logging in or resetting data might help.";
+                cell.className = "text-center text-gray-500 py-4";
+                return;
+            }
+
+            window.trackerData.forEach((day, index) => {
                 const row = trackerBody.insertRow();
                 row.className = 'hover:bg-gray-50 transition-colors duration-200';
 
@@ -514,9 +510,9 @@
                 calConsumedInput.className = 'w-24 p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100'; // Yellow for input
                 calConsumedInput.addEventListener('input', (e) => {
                     const newValue = parseInt(e.target.value) || 0;
-                    trackerData[index].caloriesConsumed = newValue;
-                    trackerData[index].netCalories = newValue - (parseInt(trackerData[index].caloriesBurned) || 0);
-                    row.cells[3].textContent = trackerData[index].netCalories; // Update net calories cell
+                    window.trackerData[index].caloriesConsumed = newValue;
+                    window.trackerData[index].netCalories = newValue - (parseInt(window.trackerData[index].caloriesBurned) || 0);
+                    row.cells[3].textContent = window.trackerData[index].netCalories; // Update net calories cell
                     saveData();
                 });
                 calConsumedCell.appendChild(calConsumedInput);
@@ -529,9 +525,9 @@
                 calBurnedInput.className = 'w-24 p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100'; // Yellow for input
                 calBurnedInput.addEventListener('input', (e) => {
                     const newValue = parseInt(e.target.value) || 0;
-                    trackerData[index].caloriesBurned = newValue;
-                    trackerData[index].netCalories = (parseInt(trackerData[index].caloriesConsumed) || 0) - newValue;
-                    row.cells[3].textContent = trackerData[index].netCalories; // Update net calories cell
+                    window.trackerData[index].caloriesBurned = newValue;
+                    window.trackerData[index].netCalories = (parseInt(window.trackerData[index].caloriesConsumed) || 0) - newValue;
+                    row.cells[3].textContent = window.trackerData[index].netCalories; // Update net calories cell
                     saveData();
                 });
                 calBurnedCell.appendChild(calBurnedInput);
@@ -549,7 +545,7 @@
                 weightInput.value = day.weight;
                 weightInput.className = 'w-24 p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100';
                 weightInput.addEventListener('input', (e) => {
-                    trackerData[index].weight = e.target.value;
+                    window.trackerData[index].weight = e.target.value;
                     saveData();
                 });
                 weightCell.appendChild(weightInput);
@@ -562,7 +558,7 @@
                 waistInput.value = day.waist;
                 waistInput.className = 'w-24 p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100';
                 waistInput.addEventListener('input', (e) => {
-                    trackerData[index].waist = e.target.value;
+                    window.trackerData[index].waist = e.target.value;
                     saveData();
                 });
                 waistCell.appendChild(waistInput);
@@ -581,7 +577,7 @@
                     workoutDoneSelect.appendChild(option);
                 });
                 workoutDoneSelect.addEventListener('change', (e) => {
-                    trackerData[index].workoutDone = e.target.value;
+                    window.trackerData[index].workoutDone = e.target.value;
                     saveData();
                 });
                 workoutDoneCell.appendChild(workoutDoneSelect);
@@ -598,7 +594,7 @@
                 commentsInput.value = day.comments;
                 commentsInput.className = 'w-full p-2 rounded-md border border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-yellow-100';
                 commentsInput.addEventListener('input', (e) => {
-                    trackerData[index].comments = e.target.value;
+                    window.trackerData[index].comments = e.target.value;
                     saveData();
                 });
                 commentsCell.appendChild(commentsInput);
@@ -610,30 +606,32 @@
          */
         async function getAIGuidance() {
             const aiGuidanceContent = document.getElementById('aiGuidanceContent');
-            const apiKeyInput = document.getElementById('apiKeyInput');
-            const userApiKey = apiKeyInput.value.trim();
+            const geminiApiKey = GEMINI_API_KEY;
 
-            if (!userApiKey) {
-                aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">Please enter your Gemini API Key to get guidance.</p>';
-                showMessageBox("API Key is missing.", 'error');
-                apiKeyInput.focus(); // Focus on the input field for user convenience
+            if (!geminiApiKey) {
+                aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">Gemini API Key is missing from configuration.</p>';
+                showMessageBox("Gemini API Key not set.", 'error');
+                console.error("AI Guidance: Gemini API Key is missing from configuration.");
                 return;
             }
-            if (!userId) {
+            if (!window.userId) {
                 aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">Please log in to use AI guidance.</p>';
                 showMessageBox("Please log in to use AI guidance.", 'error');
+                console.error("AI Guidance: User not logged in.");
                 return;
             }
 
 
             aiGuidanceContent.innerHTML = '<div class="loader"></div><p class="mt-2 text-center text-gray-500">Getting personalized advice...</p>'; // Show loading
+            console.log("Requesting AI guidance...");
 
             const today = new Date().toISOString().split('T')[0];
-            const currentDayData = trackerData.find(day => day.date === today);
+            const currentDayData = window.trackerData.find(day => day.date === today);
 
             if (!currentDayData) {
                 aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">No data found for today. Please log some progress first!</p>';
                 showMessageBox("Please log data for today first.", 'error');
+                console.error("AI Guidance: No data found for today.");
                 return;
             }
 
@@ -656,8 +654,8 @@ Based on this, please provide concise, encouraging, and actionable guidance for 
                 let chatHistory = [];
                 chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                 const payload = { contents: chatHistory };
-                // Use the user-provided API key
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${userApiKey}`;
+                // Use the hardcoded Gemini API key
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
@@ -673,60 +671,109 @@ Based on this, please provide concise, encouraging, and actionable guidance for 
                     const text = result.candidates[0].content.parts[0].text;
                     // Use marked.js to convert markdown to HTML
                     aiGuidanceContent.innerHTML = marked.parse(text);
-                    showMessageBox("AI guidance received!");
+                    showMessageBox("AI guidance received!", 'success');
+                    console.log("AI Guidance: Successfully received AI response.");
                 } else {
                     aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">Failed to get AI guidance. Please try again. (Check API Key or response structure)</p>';
                     showMessageBox("AI response error.", 'error');
-                    console.error("Unexpected AI response structure:", result);
+                    console.error("AI Guidance: Unexpected AI response structure:", result);
                 }
-            } catch (error) {
-                aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">Error connecting to AI. Check your network, API Key, or try again later.</p>';
+            }
+            catch (error) {
+                aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">Error connecting to AI. Check your network or try again later.</p>';
                 showMessageBox("Network or API error.", 'error');
-                console.error("Error fetching AI guidance:", error);
+                console.error("AI Guidance: Error fetching AI guidance:", error);
             }
         }
 
         // --- Authentication Handlers ---
         async function handleLogin() {
+            console.log("handleLogin function called.");
             const email = document.getElementById('emailInput').value;
             const password = document.getElementById('passwordInput').value;
             if (!email || !password) {
                 showMessageBox("Please enter both email and password.", 'error');
+                console.error("Login attempt failed: Email or password missing.");
+                return;
+            }
+            if (!window.auth) {
+                showMessageBox("Firebase Auth not initialized. Cannot log in. Ensure Firebase config is correctly loaded.", 'error');
+                console.error("Login attempt failed: Firebase Auth object is null. Ensure Firebase config is correctly loaded.");
                 return;
             }
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                await signInWithEmailAndPassword(window.auth, email, password);
                 showMessageBox("Logged in successfully!", 'success');
+                console.log("User logged in successfully with email:", email);
             } catch (error) {
-                showMessageBox(`Login failed: ${error.message}`, 'error');
-                console.error("Login error:", error);
+                console.error("Login error:", error.code, error.message);
+                // Custom error message for wrong email/password
+                if (error.code === 'auth/invalid-credential' || // Generic error for wrong email/password combined (newer Firebase versions)
+                    error.code === 'auth/wrong-password' ||
+                    error.code === 'auth/user-not-found') {
+                    showMessageBox("Wrong email/password", 'error');
+                } else {
+                    showMessageBox(`Login failed: ${error.message}`, 'error');
+                }
             }
         }
 
         async function handleSignUp() {
+            console.log("handleSignUp function called.");
             const email = document.getElementById('emailInput').value;
             const password = document.getElementById('passwordInput').value;
             if (!email || !password) {
                 showMessageBox("Please enter both email and password.", 'error');
+                console.error("Sign up attempt failed: Email or password missing.");
+                return;
+            }
+            if (!window.auth) {
+                showMessageBox("Firebase Auth not initialized. Cannot sign up. Ensure Firebase config is correctly loaded.", 'error');
+                console.error("Sign up attempt failed: Firebase Auth object is null. Ensure Firebase config is correctly loaded.");
                 return;
             }
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
+                await createUserWithEmailAndPassword(window.auth, email, password);
                 showMessageBox("Signed up successfully! You are now logged in.", 'success');
-                // Data will be initialized via onAuthStateChanged
+                console.log("User signed up and logged in successfully with email:", email);
             } catch (error) {
                 showMessageBox(`Sign up failed: ${error.message}`, 'error');
-                console.error("Sign up error:", error);
+                console.error("Sign up error:", error.code, error.message);
+            }
+        }
+
+        async function handleGoogleLogin() {
+            console.log("handleGoogleLogin function called.");
+            if (!window.auth) {
+                showMessageBox("Firebase Auth not initialized. Cannot sign in with Google.", 'error');
+                console.error("Google Login attempt failed: Firebase Auth object is null. Ensure Firebase config is correctly loaded.");
+                return;
+            }
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(window.auth, provider);
+                showMessageBox("Signed in with Google successfully!", 'success');
+                console.log("User signed in with Google successfully.");
+            } catch (error) {
+                showMessageBox(`Google Sign-in failed: ${error.message}`, 'error');
+                console.error("Google Sign-in error:", error.code, error.message);
             }
         }
 
         async function handleLogout() {
+            console.log("handleLogout function called.");
+            if (!window.auth) {
+                showMessageBox("Firebase Auth not initialized. Cannot log out.", 'error');
+                console.error("Logout attempt failed: Firebase Auth object is null.");
+                return;
+            }
             try {
-                await signOut(auth);
+                await signOut(window.auth);
                 showMessageBox("Logged out successfully!", 'success');
+                console.log("User logged out successfully.");
             } catch (error) {
                 showMessageBox(`Logout failed: ${error.message}`, 'error');
-                console.error("Logout error:", error);
+                console.error("Logout error:", error.code, error.message);
             }
         }
 
@@ -735,27 +782,29 @@ Based on this, please provide concise, encouraging, and actionable guidance for 
          * Now clears both tracker data from Firestore (if logged in) and local storage.
          */
         async function handleResetData() {
-            if (confirm("Are you sure you want to reset ALL your tracker data and API key? This action cannot be undone.")) {
-                if (userId) {
+            console.log("handleResetData function called.");
+            if (confirm("Are you sure you want to reset ALL your tracker data? This action cannot be undone.")) {
+                if (window.userId && window.db) {
                     try {
-                        // Clear tracker data in Firestore
-                        await setDoc(getTrackerDocRef(userId), { data: [] });
-                        // Clear API key in Firestore
-                        await setDoc(getUserSettingsDocRef(userId), { geminiApiKey: '' });
-                        showMessageBox("Account data reset!", 'success');
+                        const trackerDocRef = getTrackerDocRef(window.userId);
+                        // Explicitly delete the document to ensure a clean slate for initializeTrackerDataAndSave
+                        await deleteDoc(trackerDocRef);
+                        showMessageBox("Account data cleared. Initializing new data...", 'success');
+                        console.log("handleResetData: Firestore account data (tracker) cleared successfully. onSnapshot will re-init.");
+                        // initializeTrackerDataAndSave() will be triggered by the onSnapshot listener after delete
                     } catch (e) {
-                        console.error("Error resetting Firestore data:", e);
-                        showMessageBox("Error resetting account data.", 'error');
+                        console.error("handleResetData: Error clearing Firestore data:", e);
+                        showMessageBox("Error clearing account data.", 'error');
                     }
                 }
 
                 // Clear local storage regardless, for a clean slate
                 localStorage.removeItem(localStorageKey);
-                localStorage.removeItem(apiKeyLocalStorageKey);
+                console.log("handleResetData: Local storage data cleared.");
 
-                initializeTrackerData(); // Re-initialize default tracker data (will save to Firestore if logged in)
-                renderTable(); // Re-render table (will be empty or default)
-                document.getElementById('apiKeyInput').value = ''; // Clear API key input field
+                // The onAuthStateChanged listener will handle re-initialization if the user is still logged in
+                // or if they log in again later. If data was deleted, the onSnapshot will trigger
+                // initializeTrackerDataAndSave.
                 document.getElementById('aiGuidanceContent').innerHTML = '<p class="text-center text-gray-500">Click "Get AI Guidance" to receive personalized feedback!</p>';
                 showMessageBox("All data has been reset!", 'error');
             }
@@ -765,81 +814,114 @@ Based on this, please provide concise, encouraging, and actionable guidance for 
          * Initializes the application: Firebase, auth listener, and UI setup.
          */
         function initApp() {
-            if (firebaseConfig) {
-                firebaseApp = initializeApp(firebaseConfig);
-                auth = getAuth(firebaseApp);
-                db = getFirestore(firebaseApp);
+            console.log("initApp: started.");
+            if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
+                console.log("initApp: Firebase config found:", firebaseConfig);
+                window.firebaseApp = initializeApp(firebaseConfig);
+                window.auth = getAuth(window.firebaseApp);
+                window.db = getFirestore(window.firebaseApp);
+                console.log("initApp: Firebase initialized successfully. Auth object:", window.auth, "DB object:", window.db);
 
-                // Handle initial Canvas authentication
-                if (typeof __initial_auth_token !== 'undefined') {
-                     signInWithCustomToken(auth, __initial_auth_token)
-                        .then(() => console.log("Signed in with custom token from Canvas."))
-                        .catch(error => {
-                            console.error("Error signing in with custom token:", error);
-                            // Fallback to anonymous if custom token fails, or if not provided
-                            signInAnonymously(auth)
-                                .then(() => console.log("Signed in anonymously."))
-                                .catch(anonError => console.error("Anonymous sign-in failed:", anonError));
-                        });
-                } else {
-                    // If not in Canvas environment or no custom token, try anonymous sign-in or wait for user login
-                     signInAnonymously(auth)
-                        .then(() => console.log("Signed in anonymously or awaiting user login."))
-                        .catch(error => console.error("Anonymous sign-in failed:", error));
-                }
+                console.log("initApp: Automatic sign-in via custom token/anonymous removed. Please use Email/Password or Google login.");
 
                 // Attach event listeners for auth UI
-                document.getElementById('loginBtn').addEventListener('click', handleLogin);
-                document.getElementById('signupBtn').addEventListener('click', handleSignUp);
-                document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-                document.getElementById('apiKeyInput').addEventListener('input', (e) => {
-                    saveApiKey(e.target.value.trim());
-                });
-                document.getElementById('getAIGuidanceBtn').addEventListener('click', getAIGuidance);
-                document.getElementById('resetDataBtn').addEventListener('click', handleResetData);
+                const loginBtn = document.getElementById('loginBtn');
+                const signupBtn = document.getElementById('signupBtn');
+                const googleLoginBtn = document.getElementById('googleLoginBtn');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const getAIGuidanceBtn = document.getElementById('getAIGuidanceBtn');
+                const resetDataBtn = document.getElementById('resetDataBtn');
 
+                if (loginBtn) {
+                    loginBtn.addEventListener('click', handleLogin);
+                    console.log("initApp: Event listener attached to loginBtn.");
+                } else { console.error("initApp: loginBtn not found. Check HTML structure."); }
+                if (signupBtn) {
+                    signupBtn.addEventListener('click', handleSignUp);
+                    console.log("initApp: Event listener attached to signupBtn.");
+                } else { console.error("initApp: signupBtn not found. Check HTML structure."); }
+                if (googleLoginBtn) {
+                    googleLoginBtn.addEventListener('click', handleGoogleLogin);
+                    console.log("initApp: Event listener attached to googleLoginBtn.");
+                } else { console.error("initApp: googleLoginBtn not found. Check HTML structure."); }
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', handleLogout);
+                    console.log("initApp: Event listener attached to logoutBtn.");
+                } else { console.error("initApp: logoutBtn not found. Check HTML structure."); }
+
+                if (getAIGuidanceBtn) {
+                    getAIGuidanceBtn.addEventListener('click', getAIGuidance);
+                    console.log("initApp: Event listener attached to getAIGuidanceBtn.");
+                } else { console.error("initApp: getAIGuidanceBtn not found."); }
+                if (resetDataBtn) {
+                    resetDataBtn.addEventListener('click', handleResetData);
+                    console.log("initApp: Event listener attached to resetDataBtn.");
+                } else { console.error("initApp: resetDataBtn not found."); }
 
                 // Listen for authentication state changes
-                onAuthStateChanged(auth, (user) => {
+                onAuthStateChanged(window.auth, (user) => {
+                    console.log("onAuthStateChanged: triggered. User:", user ? user.uid : "null");
                     if (user) {
-                        userId = user.uid;
-                        document.getElementById('userEmail').textContent = user.email || 'Anonymous';
-                        document.getElementById('userIdDisplay').textContent = user.uid.substring(0, 8) + '...'; // Display truncated UID
+                        window.userId = user.uid;
+                        document.getElementById('userEmail').textContent = user.email || user.displayName || 'Anonymous';
+                        document.getElementById('userIdDisplay').textContent = user.uid.substring(0, 8) + '...';
                         document.getElementById('loginForm').classList.add('hidden');
                         document.getElementById('userInfo').classList.remove('hidden');
                         document.getElementById('appContent').classList.remove('hidden'); // Show tracker
-                        document.getElementById('apiKeySection').classList.remove('hidden'); // Show API key input
+                        showMessageBox("Welcome, " + (user.email || user.displayName || "Anonymous User") + "!");
+                        console.log("onAuthStateChanged: User logged in. UID:", window.userId, "Email:", user.email);
 
-                        loadTrackerAndSettingsData(); // Load user-specific data from Firestore
-                        showMessageBox("Welcome, " + (user.email || "Anonymous User") + "!");
+                        loadTrackerAndSettingsData(); // Load user-specific data from Firestore (tracker data)
 
                     } else {
-                        userId = null;
-                        if (currentUnsubscribe) {
-                            currentUnsubscribe(); // Detach Firestore listener on logout
-                            currentUnsubscribe = null;
+                        window.userId = null;
+                        if (window.currentUnsubscribe) {
+                            window.currentUnsubscribe(); // Detach Firestore listener on logout
+                            window.currentUnsubscribe = null;
+                            console.log("onAuthStateChanged: Firestore listener detached.");
                         }
                         document.getElementById('loginForm').classList.remove('hidden');
                         document.getElementById('userInfo').classList.add('hidden');
                         document.getElementById('appContent').classList.add('hidden'); // Hide tracker
-                        document.getElementById('apiKeySection').classList.add('hidden'); // Hide API key input
-                        trackerData = []; // Clear current data in memory
+                        window.trackerData = []; // Clear current data in memory
                         renderTable(); // Clear table display
-                        document.getElementById('apiKeyInput').value = ''; // Clear API key input field
-                        document.getElementById('aiGuidanceContent').innerHTML = '<p class="text-center text-gray-500">Click "Get AI Guidance" to receive personalized feedback!</p>'; // Reset AI content
+                        document.getElementById('aiGuidanceContent').innerHTML = '<p class="text-center text-gray-500">Click "Get AI Guidance" to receive personalized feedback!</p>';
                         showMessageBox("Please log in to access your tracker.", 'info');
+                        console.log("onAuthStateChanged: User logged out.");
                     }
                 });
             } else {
-                showMessageBox("Firebase configuration not found. App may not function correctly.", 'error');
-                console.error("Firebase config is missing. Please ensure __firebase_config is set in the environment.");
+                showMessageBox("Firebase configuration not found. Please ensure Firebase is set up correctly in the environment.", 'error');
+                console.error("initApp: Firebase config is missing or empty. Please ensure your Firebase config is correctly defined in the code.");
                 // Disable functionality if Firebase cannot be initialized
-                document.getElementById('loginBtn').disabled = true;
-                document.getElementById('signupBtn').disabled = true;
-                document.getElementById('getAIGuidanceBtn').disabled = true;
-                document.getElementById('resetDataBtn').disabled = true;
+                const loginBtn = document.getElementById('loginBtn');
+                const signupBtn = document.getElementById('signupBtn');
+                const googleLoginBtn = document.getElementById('googleLoginBtn');
+                const getAIGuidanceBtn = document.getElementById('getAIGuidanceBtn');
+                const resetDataBtn = document.getElementById('resetDataBtn');
+
+                if (loginBtn) {
+                    loginBtn.disabled = true;
+                    loginBtn.textContent = "Firebase Not Configured";
+                }
+                if (signupBtn) {
+                    signupBtn.disabled = true;
+                    signupBtn.textContent = "Firebase Not Configured";
+                }
+                if (googleLoginBtn) {
+                    googleLoginBtn.disabled = true;
+                    googleLoginBtn.textContent = "Firebase Not Configured";
+                }
+                if (getAIGuidanceBtn) getAIGuidanceBtn.disabled = true;
+                if (resetDataBtn) resetDataBtn.disabled = true;
+
+                document.getElementById('emailInput').placeholder = "Firebase not configured";
+                document.getElementById('passwordInput').placeholder = "Firebase not configured";
+                console.log("initApp: Firebase not configured. Buttons disabled and placeholder text updated.");
             }
         }
+        // Ensure initApp is called when the DOM is fully loaded.
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
