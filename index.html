@@ -6,6 +6,8 @@
     <title>30-Day Abs Challenge Tracker</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked.js CDN for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         /* Custom styles for the app */
         body {
@@ -75,6 +77,15 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Basic styling for markdown elements rendered by marked.js */
+        #aiGuidanceContent h1 { font-size: 1.8em; margin-bottom: 0.5em; }
+        #aiGuidanceContent h2 { font-size: 1.5em; margin-bottom: 0.4em; }
+        #aiGuidanceContent p { margin-bottom: 1em; }
+        #aiGuidanceContent ul { list-style-type: disc; margin-left: 20px; margin-bottom: 1em;}
+        #aiGuidanceContent ol { list-style-type: decimal; margin-left: 20px; margin-bottom: 1em;}
+        #aiGuidanceContent strong { font-weight: bold; }
+        #aiGuidanceContent em { font-style: italic; }
     </style>
 </head>
 <body class="p-4">
@@ -162,7 +173,7 @@
                         <th class="py-3 px-4 border border-gray-300">Date</th>
                         <th class="py-3 px-4 border border-gray-300">Calories Consumed (kcal)</th>
                         <th class="py-3 px-4 border border-gray-300">Calories Burned (Workout) (kcal)</th>
-                        <th class="py-3 px-4 border border-gray-300">Net Calories (kcal)</th>
+                        <th class="py-3 px-4 border भागा border-gray-300">Net Calories (kcal)</th>
                         <th class="py-3 px-4 border border-gray-300">Weight (kg)</th>
                         <th class="py-3 px-4 border border-gray-300">Waist Circumference (cm)</th>
                         <th class="py-3 px-4 border border-gray-300">Workout Done? (Y/N)</th>
@@ -268,7 +279,7 @@
                 const netCalories = caloriesConsumed - caloriesBurnedWorkout;
 
                 trackerData.push({
-                    date: currentDate.toISOString().split('T')[0], // McClellan-MM-DD format
+                    date: currentDate.toISOString().split('T')[0], // YYYY-MM-DD format
                     caloriesConsumed: caloriesConsumed,
                     caloriesBurned: caloriesBurnedWorkout,
                     netCalories: netCalories,
@@ -485,7 +496,8 @@ Based on this, please provide concise, encouraging, and actionable guidance for 
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
                     const text = result.candidates[0].content.parts[0].text;
-                    aiGuidanceContent.innerHTML = `<p>${text}</p>`;
+                    // Use marked.js to convert markdown to HTML
+                    aiGuidanceContent.innerHTML = marked.parse(text);
                     showMessageBox("AI guidance received!");
                 } else {
                     aiGuidanceContent.innerHTML = '<p class="text-center text-red-500">Failed to get AI guidance. Please try again. (Check API Key or response structure)</p>';
