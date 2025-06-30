@@ -1,1 +1,2 @@
 # fitnesstrackerpro.github.io
+# sudo apt install -y meson wget build-essential ninja-build cmake-extras cmake gettext gettext-base fontconfig libfontconfig-dev libffi-dev libxml2-dev libdrm-dev libxkbcommon-x11-dev libxkbregistry-dev libxkbcommon-dev libpixman-1-dev libudev-dev libseat-dev seatd libxcb-dri3-dev libegl-dev libgles2 libegl1-mesa-dev libinput-dev libgudev-1.0-dev libdisplay-info-dev libliftoff-dev libvulkan-dev libtomlplusplus-dev libchibi-scheme-dev libdrm-dev libegl1-mesa-dev libglm-dev libpng-dev libwayland-dev wayland-protocols-dev
